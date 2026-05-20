@@ -1,5 +1,4 @@
 # === Core utilities ===
-streamlit==1.44.1
 codecov
 flake8
 graphviz
