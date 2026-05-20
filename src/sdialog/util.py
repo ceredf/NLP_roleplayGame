@@ -16,7 +16,6 @@ import random
 import logging
 import subprocess
 import numpy as np
-import transformers
 import pandas as pd
 
 from time import sleep
@@ -25,9 +24,6 @@ from functools import wraps
 from pydantic import BaseModel
 from typing import Union, List, Tuple
 from sklearn.neighbors import NearestNeighbors
-from transformers import AutoTokenizer, AutoModel
-from torch.utils.data import DataLoader, TensorDataset
-from sentence_transformers.util import get_device_name, batch_to_device
 
 from langchain.chat_models import init_chat_model
 from langchain_ollama.chat_models import ChatOllama
@@ -442,7 +438,9 @@ def get_llm_model(model_name: str,
         if model_name.startswith("huggingface:"):
             model_name = model_name.split(":", 1)[-1]
         logger.info(f"Loading Hugging Face model: {model_name}")
+        import transformers
         from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
+        from transformers import AutoTokenizer
 
         # Remove 'seed' from llm_kwargs if present (not supported by HuggingFace pipeline)
         llm_kwargs = {k: v for k, v in llm_kwargs.items() if k != "seed"}
@@ -697,6 +695,9 @@ class SentencePairTransformer:  # As opposed to SentenceTransformer
     """
     def __init__(self, model_name: str = "roberta-base", device: str = None, verbose: bool = True):
         """Initialize sentence pair encoder."""
+        from sentence_transformers.util import get_device_name
+        from transformers import AutoModel, AutoTokenizer
+
         if device is None:
             device = get_device_name()
             logger.info(f"Use pytorch device_name: {device}")
@@ -727,6 +728,9 @@ class SentencePairTransformer:  # As opposed to SentenceTransformer
         :return: Array of shape (N, hidden_size) containing CLS embeddings.
         :rtype: np.ndarray
         """
+        from sentence_transformers.util import batch_to_device
+        from torch.utils.data import DataLoader, TensorDataset
+
         embs = []
 
         self.model.eval()
