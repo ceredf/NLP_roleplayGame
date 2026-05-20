@@ -1,0 +1,53 @@
+# === Core utilities ===
+codecov
+flake8
+graphviz
+Jinja2
+matplotlib
+networkx
+numpy<2
+pandas
+tabulate
+pre-commit
+print-color
+PyYAML
+tqdm
+tenacity
+syllables
+
+# === Web server (optional) ===
+fastapi
+uvicorn
+
+# === LangChain ecosystem ===
+# LangChain ≥0.3.0 officially targets Python 3.9+, but later releases may require 3.10+.
+# Lock compatible versions for Python 3.9.
+langchain-huggingface
+langchain-openai
+langchain-google-genai
+langchain-anthropic
+langchain-aws
+langchain-ollama
+langchain<0.4.0; python_version < "3.10"
+langchain; python_version >= "3.10"
+
+# === Machine learning & NLP dependencies ===
+datasets>=2.20.0
+sentence-transformers
+huggingface_hub
+simpleneighbors
+scikit-learn
+scipy
+pydantic
+transformers<=4.56.2; python_version < "3.10"
+transformers; python_version >= "3.10"
+torch
+
+# === Testing ===
+pytest
+pytest-cov
+
+# === LLM provider SDKs ===
+# Used to interface with local or hosted large-language-model backends
+ollama
+openai

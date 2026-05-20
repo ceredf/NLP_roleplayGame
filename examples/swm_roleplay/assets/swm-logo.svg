@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 220" role="img" aria-label="SWM">
+    <defs>
+        <linearGradient id="swm-stamp" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#3f6b3c"></stop>
+            <stop offset="100%" stop-color="#2a4a28"></stop>
+        </linearGradient>
+        <linearGradient id="swm-rule" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8e6b3f" stop-opacity="0"></stop>
+            <stop offset="50%" stop-color="#8e6b3f" stop-opacity="0.6"></stop>
+            <stop offset="100%" stop-color="#8e6b3f" stop-opacity="0"></stop>
+        </linearGradient>
+    </defs>
+
+    
+    <text x="60" y="158" font-family="&#39;Newsreader&#39;,&#39;Georgia&#39;,serif" font-size="170" font-weight="700" letter-spacing="-4" fill="#2a2d26">S</text>
+
+    
+    <g transform="translate(186,68) rotate(-4)">
+        
+        <text x="4" y="93" font-family="&#39;Newsreader&#39;,&#39;Georgia&#39;,serif" font-size="170" font-weight="700" font-style="italic" fill="#8e6b3f" opacity="0.32">W</text>
+        
+        <text x="0" y="90" font-family="&#39;Newsreader&#39;,&#39;Georgia&#39;,serif" font-size="170" font-weight="700" font-style="italic" fill="url(#swm-stamp)">W</text>
+        
+        <path d="M-2 110 q66 -8 132 5" stroke="#8e6b3f" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"></path>
+    </g>
+
+    
+    <text x="370" y="158" font-family="&#39;Newsreader&#39;,&#39;Georgia&#39;,serif" font-size="170" font-weight="700" letter-spacing="-4" fill="#2a2d26">M</text>
+
+    
+    <line x1="170" y1="190" x2="370" y2="190" stroke="url(#swm-rule)" stroke-width="1.5"></line>
+    <text x="270" y="208" font-family="&#39;Public Sans&#39;,&#39;Helvetica Neue&#39;,sans-serif" font-size="12" font-weight="700" letter-spacing="6" fill="#5b4a32" text-anchor="middle">A NEGOTIATION GAME</text>
+</svg>

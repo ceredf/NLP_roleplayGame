@@ -1,0 +1,25 @@
+{
+  "voting": {
+    "check_vote_labels": [
+      "support",
+      "oppose",
+      "undecided"
+    ],
+    "final_vote_labels": [
+      "yes",
+      "no"
+    ]
+  },
+  "outcome_thresholds": {
+    "win": {
+      "minimum_endorsements": 4
+    },
+    "partial_win": {
+      "minimum_endorsements": 3,
+      "maximum_endorsements": 3
+    },
+    "lose": {
+      "maximum_endorsements": 2
+    }
+  }
+}
