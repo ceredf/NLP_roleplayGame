@@ -25,6 +25,7 @@ uvicorn
 langchain-huggingface
 langchain-openai
 langchain-google-genai
+langchain-google-vertexai
 langchain-anthropic
 langchain-aws
 langchain-ollama

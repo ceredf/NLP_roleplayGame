@@ -124,6 +124,13 @@ st.markdown(theme.css(), unsafe_allow_html=True)
 
 def default_model_value() -> str:
     """Prefer a hosted Google model automatically when a Gemini key is present."""
+    if (
+        os.getenv("GOOGLE_CLOUD_PROJECT")
+        or os.getenv("GCLOUD_PROJECT")
+        or os.getenv("GCP_PROJECT")
+        or os.getenv("K_SERVICE")
+    ):
+        return "vertexai:gemini-2.5-flash"
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "google:gemini-2.5-flash"
     return "ollama:qwen2.5:latest"
@@ -979,7 +986,8 @@ def render_setup() -> None:
         )
         model = st.text_input("AI model", value=default_model_value())
         st.caption(
-            "Examples: `google:gemini-2.5-flash` for hosted Gemini or "
+            "Examples: `vertexai:gemini-2.5-flash` for billed Google Cloud Vertex AI, "
+            "`google:gemini-2.5-flash` for Gemini API, or "
             "`ollama:qwen2.5:latest` for a local Ollama server."
         )
         think = st.checkbox("Enable extended thinking", value=False)

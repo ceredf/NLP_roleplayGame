@@ -269,6 +269,7 @@ def is_ollama_model_name(model_name: str) -> bool:
         or not is_huggingface_model_name(model_name)
         and not is_openai_model_name(model_name)
         and not is_google_genai_model_name(model_name)
+        and not is_vertexai_model_name(model_name)
         and not is_amazon_model_name(model_name)
         and not is_anthropic_model_name(model_name)
         and not is_azure_openai_model_name(model_name)
@@ -312,6 +313,19 @@ def is_google_genai_model_name(model_name: str) -> bool:
     :rtype: bool
     """
     return re.match(r"^google([-_]genai)?:", model_name, re.IGNORECASE)
+
+
+@check_valid_model_name
+def is_vertexai_model_name(model_name: str) -> bool:
+    """
+    Check whether the model name targets a Google Cloud Vertex AI model.
+
+    :param model_name: Model name string.
+    :type model_name: str
+    :return: True if Vertex AI.
+    :rtype: bool
+    """
+    return re.match(r"^(vertex(ai)?|google[-_]vertexai):", model_name, re.IGNORECASE)
 
 
 @check_valid_model_name
@@ -415,6 +429,24 @@ def get_llm_model(model_name: str,
         logger.info(f"Loading Google GenAI model: {model_name}")
 
         llm = init_chat_model(f"google_genai:{model_name}", **llm_kwargs)
+    elif is_vertexai_model_name(model_name):
+        if ":" in model_name:
+            model_name = model_name.split(":", 1)[-1]
+        logger.info(f"Loading Vertex AI model: {model_name}")
+
+        from langchain_google_vertexai import ChatVertexAI
+
+        vertex_kwargs = dict(llm_kwargs)
+        vertex_kwargs.setdefault(
+            "project",
+            os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCLOUD_PROJECT") or os.getenv("GCP_PROJECT"),
+        )
+        vertex_kwargs.setdefault(
+            "location",
+            os.getenv("VERTEX_AI_LOCATION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "europe-west1",
+        )
+
+        llm = ChatVertexAI(model=model_name, **vertex_kwargs)
     elif is_anthropic_model_name(model_name):
         if ":" in model_name:
             model_name = model_name.split(":", 1)[-1]
