@@ -29,7 +29,7 @@ from . import Dialog, Turn, Event, Instruction, Context
 from .personas import BasePersona
 from .orchestrators import BaseOrchestrator
 from .interpretability import ResponseHook, ActivationHook, Inspector
-from .util import get_llm_model, is_amazon_model_name, is_huggingface_model_name, set_generator_seed, get_universal_id
+from .util import get_llm_model, is_amazon_model_name, is_huggingface_model_name, normalize_seed, set_generator_seed, get_universal_id
 
 logger = logging.getLogger(__name__)
 
@@ -879,7 +879,7 @@ class Agent:
         :return: The generated dialogue object.
         :rtype: Dialog
         """
-        seed = seed if seed is not None else random.getrandbits(32)
+        seed = normalize_seed(seed)
 
         random.seed(seed)
         self.reset(seed, context, example_dialogs)

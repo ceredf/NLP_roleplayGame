@@ -19,7 +19,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from .. import Turn
 from ..config import config
 from ..base import Metadata, BaseAttributeModel
-from ..util import get_universal_id, get_llm_model, get_llm_default_params, is_ollama_model_name, is_openai_model_name
+from ..util import get_universal_id, get_llm_model, get_llm_default_params, is_ollama_model_name, is_openai_model_name, normalize_seed
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +242,7 @@ class BaseAttributeModelGenerator(ABC):
         :rtype: Union[BaseAttributeModel, List[BaseAttributeModel]]
         :raises ValueError: On missing files referenced in template specifications.
         """
-        seed = seed if seed is not None else random.getrandbits(32)
+        seed = normalize_seed(seed)
         random.seed(seed)
 
         output_object = None
@@ -374,7 +374,7 @@ class BaseAttributeModelGenerator(ABC):
                 llm_kwargs = get_llm_default_params(self.llm_model, llm_kwargs)
                 if temperature is not None:
                     llm_kwargs["temperature"] = temperature
-                llm_kwargs["seed"] = seed + attempt
+                llm_kwargs["seed"] = normalize_seed(seed + attempt)
 
                 llm = get_llm_model(model_name=self.llm_model,
                                     output_format=schema,

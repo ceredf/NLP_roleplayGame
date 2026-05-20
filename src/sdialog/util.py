@@ -37,6 +37,7 @@ from langchain_core.language_models.base import BaseLanguageModel
 logger = logging.getLogger(__name__)
 
 __version__ = "0.4.7"
+INT32_MAX = 2**31 - 1
 
 
 def _get_dynamic_version() -> str:
@@ -172,6 +173,23 @@ def get_timestamp() -> str:
     """
     from datetime import datetime, timezone
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+
+
+def normalize_seed(seed: int = None) -> int:
+    """
+    Normalize seeds to the signed 32-bit range accepted by stricter backends.
+
+    If seed is None, generate one directly in the valid range. If the provided
+    value is outside range, fold it deterministically into `[0, INT32_MAX]`.
+
+    :param seed: Requested seed value.
+    :type seed: Optional[int]
+    :return: Signed 32-bit compatible seed.
+    :rtype: int
+    """
+    if seed is None:
+        return random.randint(0, INT32_MAX)
+    return int(seed) % (INT32_MAX + 1)
 
 
 def get_llm_default_params(model_name: str, llm_params: dict, retry: bool = True) -> float:
@@ -477,7 +495,7 @@ def set_generator_seed(generator, seed):
     :return: The seed actually used (or None if unsupported).
     :rtype: int
     """
-    seed = seed if seed is not None else random.getrandbits(32)
+    seed = normalize_seed(seed)
     llm = generator.llm
     base_model = None
     try:
