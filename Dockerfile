@@ -18,4 +18,4 @@ RUN pip install --upgrade pip setuptools wheel \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "streamlit run examples/swm_roleplay/streamlit_app.py --server.address 0.0.0.0 --server.port ${PORT:-8080}"]
+CMD ["sh", "-c", "streamlit run examples/swm_roleplay/streamlit_app.py --server.address 0.0.0.0 --server.port ${PORT:-8080} --server.enableCORS false --server.enableXsrfProtection false --server.enableWebsocketCompression false"]
