@@ -15,24 +15,7 @@ from typing import Dict, List, Tuple
 
 import streamlit as st
 
-from langchain_core.messages import HumanMessage
-
 from ui import theme, components
-
-from sdialog.roleplay import (
-    default_city_x_game_rules_path,
-    default_city_x_scenario_path,
-    load_and_prepare_roleplay_session,
-    load_roleplay_scenario,
-)
-from sdialog.roleplay_engine import (
-    advance_round,
-    amend_working_proposal,
-    create_roleplay_runtime,
-    create_working_proposal,
-    record_final_vote,
-    resolve_game_outcome,
-)
 
 
 NEGOTIABLE_DIMENSIONS = [
@@ -170,6 +153,8 @@ def ensure_state() -> None:
 
 
 def scenario():
+    from sdialog.roleplay import default_city_x_scenario_path, load_roleplay_scenario
+
     return load_roleplay_scenario(default_city_x_scenario_path())
 
 
@@ -232,6 +217,8 @@ def _handle_llm_error(exc: Exception) -> None:
 
 
 def _call_agent(role_id: str, prompt: str) -> str:
+    from langchain_core.messages import HumanMessage
+
     agent = rt().agents[role_id]
     # STATELESS call: pass the prompt as a one-message list. sdialog keeps the
     # agent's persona/system prompt (memory[0]) but does NOT accumulate the
@@ -326,6 +313,8 @@ def _do_lock_flags(human_flags: Dict[str, str]) -> None:
 
 
 def _do_final_vote(human_vote: str) -> None:
+    from sdialog.roleplay_engine import record_final_vote, resolve_game_outcome
+
     ai_votes = _generate_ai_final_votes()
     all_votes = {human_role(): {"vote": human_vote, "reason": "Player-selected vote."}}
     all_votes.update(ai_votes)
@@ -404,6 +393,8 @@ def _moderator_text(task: str, extra: str = "") -> str:
 
 
 def _sync_proposal_to_game() -> None:
+    from sdialog.roleplay_engine import amend_working_proposal, create_working_proposal
+
     dims = {
         key: value.strip()
         for key, value in st.session_state.proposal_form.items()
@@ -864,6 +855,13 @@ def _map_to_engine_vote(label: str) -> str:
 
 
 def init_game(model: str, role_id: str, think: bool) -> None:
+    from sdialog.roleplay import (
+        default_city_x_game_rules_path,
+        default_city_x_scenario_path,
+        load_and_prepare_roleplay_session,
+    )
+    from sdialog.roleplay_engine import create_roleplay_runtime
+
     session = load_and_prepare_roleplay_session(
         default_city_x_scenario_path(),
         rules_path=default_city_x_game_rules_path(),
@@ -1051,6 +1049,8 @@ def _finish_round1() -> None:
         unsafe_allow_html=True,
     )
     if st.button("Enter Round 2: Proposal Building", type="primary", use_container_width=True):
+        from sdialog.roleplay_engine import advance_round
+
         advance_round(game())
         st.session_state.stage = "round2_bids"
         st.rerun()
@@ -1362,6 +1362,8 @@ def render_round2_results() -> None:
     contested = st.session_state.round3_dimensions
     if contested:
         if st.button("Reopen contested dimensions", type="primary", use_container_width=True):
+            from sdialog.roleplay_engine import advance_round
+
             advance_round(game())
             st.session_state.round3_addressed = set()
             reasons = [f"{SECTION_LABELS[dim]}: {st.session_state.round2_flags[dim]['summary']}" for dim in contested]
@@ -1373,6 +1375,8 @@ def render_round2_results() -> None:
             st.rerun()
     else:
         if st.button("Proceed to final vote", type="primary", use_container_width=True):
+            from sdialog.roleplay_engine import advance_round
+
             advance_round(game())
             st.session_state.notice = "All negotiated dimensions were accepted. The room moves to the final endorsement vote."
             st.session_state.stage = "final_vote"
