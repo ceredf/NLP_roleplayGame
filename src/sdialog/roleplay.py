@@ -474,7 +474,7 @@ def default_city_x_scenario_path() -> str:
     :return: Absolute path to the example scenario pack.
     :rtype: str
     """
-    return str(Path(__file__).resolve().parents[2] / "examples" / "swm_roleplay" / "city_x_scenario.json")
+    return _resolve_city_x_example_path("city_x_scenario.json")
 
 
 def default_city_x_game_rules_path() -> str:
@@ -484,4 +484,31 @@ def default_city_x_game_rules_path() -> str:
     :return: Absolute path to the example game-rules file.
     :rtype: str
     """
-    return str(Path(__file__).resolve().parents[2] / "examples" / "swm_roleplay" / "city_x_game_rules.json")
+    return _resolve_city_x_example_path("city_x_game_rules.json")
+
+
+def _resolve_city_x_example_path(filename: str) -> str:
+    """
+    Resolve example data files from either a source checkout or a deployed cwd.
+
+    The example JSON files live in the repository under `examples/swm_roleplay/`
+    and are not installed inside the `sdialog` wheel itself. This helper checks
+    the common locations used by local development and Cloud Run deployments.
+
+    :param filename: Example JSON filename to resolve.
+    :type filename: str
+    :return: Absolute path to the requested example file.
+    :rtype: str
+    :raises FileNotFoundError: If the file is not found in any supported location.
+    """
+    candidates = [
+        Path(__file__).resolve().parents[2] / "examples" / "swm_roleplay" / filename,
+        Path.cwd() / "examples" / "swm_roleplay" / filename,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+    tried = "\n".join(f"- {candidate}" for candidate in candidates)
+    raise FileNotFoundError(
+        f"Could not locate bundled City X example file '{filename}'. Tried:\n{tried}"
+    )
