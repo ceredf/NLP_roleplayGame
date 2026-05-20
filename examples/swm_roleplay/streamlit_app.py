@@ -208,6 +208,22 @@ def _recent_transcript(max_turns: int = 10) -> str:
 _THINK_RE = re.compile(r"<think(?:ing)?>.*?</think(?:ing)?>", re.DOTALL | re.IGNORECASE)
 
 
+def _handle_llm_error(exc: Exception) -> None:
+    """Convert backend failures into a user-facing notice instead of a crash."""
+    msg = str(exc)
+    lowered = msg.lower()
+    if any(token in lowered for token in ("resource_exhausted", "quota exceeded", "rate limit", "429")):
+        st.session_state.notice = (
+            "The Gemini backend hit a quota limit, so the game is temporarily using scripted stakeholder "
+            "fallbacks. Wait a bit, switch backend, or redeploy with a billed backend if you want full AI turns."
+        )
+    elif any(token in lowered for token in ("invalid_argument", "api key", "permission denied", "unauthenticated")):
+        st.session_state.notice = (
+            "The selected AI backend rejected a request. The game will keep going with scripted stakeholder "
+            "fallbacks until the backend configuration is fixed."
+        )
+
+
 def _call_agent(role_id: str, prompt: str) -> str:
     agent = rt().agents[role_id]
     # STATELESS call: pass the prompt as a one-message list. sdialog keeps the
@@ -215,10 +231,16 @@ def _call_agent(role_id: str, prompt: str) -> str:
     # growing dialog into context. Previously we passed the full game dialog,
     # so by Round 2 the most-used reactor (NGO covers 2 dimensions) overflowed
     # the model context and returned empty -> canned fallback every turn.
-    try:
-        raw = agent([HumanMessage(content=prompt)]) or ""
-    except Exception:
-        raw = agent(prompt) or ""
+    raw = ""
+    last_error = None
+    for payload in ([HumanMessage(content=prompt)], prompt):
+        try:
+            raw = agent(payload) or ""
+            break
+        except Exception as exc:
+            last_error = exc
+    if not raw and last_error is not None:
+        _handle_llm_error(last_error)
     # Some models emit a <think>...</think> block and nothing else; stripping it
     # naively would leave an empty turn. Remove the block, then fall back.
     text = _THINK_RE.sub("", raw).strip()
