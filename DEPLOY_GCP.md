@@ -42,7 +42,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt streamlit
-pip install -e . --no-deps
+pip install . --no-deps --no-build-isolation
 streamlit run examples/swm_roleplay/streamlit_app.py
 ```
 

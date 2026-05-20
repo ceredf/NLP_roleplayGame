@@ -40,7 +40,7 @@ cd deploy
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
-pip install -e .              # installs sdialog + requirements
+pip install . --no-deps --no-build-isolation
 pip install streamlit
 ```
 

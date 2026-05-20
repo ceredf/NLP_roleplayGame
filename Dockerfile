@@ -14,7 +14,7 @@ COPY examples ./examples
 
 RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.txt streamlit \
-    && pip install -e . --no-deps
+    && pip install . --no-deps --no-build-isolation
 
 EXPOSE 8080
 
