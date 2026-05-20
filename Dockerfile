@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY requirements.txt pyproject.toml README.md LICENSE ./
+COPY .streamlit ./.streamlit
 COPY src ./src
 COPY examples ./examples
 

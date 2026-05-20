@@ -1,10 +1,15 @@
 # Deploy to Google Cloud Run
 
-This game is a Streamlit app. On Google Cloud, the simplest path is:
+This game is a Streamlit app. On Google Cloud, there are two workable paths:
 
 1. Run the app on **Cloud Run**
-2. Use **Gemini API** as the hosted LLM backend
-3. Store the API key as an environment variable or Secret Manager secret
+2. Use either **Gemini API** or **Vertex AI** as the hosted LLM backend
+3. Store the API key as an environment variable, or prefer **Vertex AI credentials** on Cloud Run
+
+> [!IMPORTANT]
+> If your Google AI Studio project still shows **Free tier**, a `GEMINI_API_KEY`
+> may continue to hit free-tier Gemini quotas even when the Cloud project has a
+> billing account attached. In that case, prefer the **Vertex AI** path below.
 
 ## 1) Create the Gemini API key
 
@@ -69,7 +74,40 @@ gcloud run deploy city-x-game \
 If the code is only on your Mac and not in Git yet, use the local install path
 below instead.
 
-## 4) Enable the required Google Cloud services
+## 4) Vertex AI path (recommended for billed Google Cloud usage)
+
+Vertex AI uses your Google Cloud project credentials directly instead of an AI
+Studio API key.
+
+Enable the required services:
+
+```bash
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable aiplatform.googleapis.com run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+```
+
+Then deploy without `GEMINI_API_KEY` and tell the app which project/location to
+use:
+
+```bash
+gcloud run deploy city-x-game \
+  --source . \
+  --region europe-west1 \
+  --allow-unauthenticated \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,VERTEX_AI_LOCATION=europe-west1
+```
+
+In the app setup screen, use:
+
+```text
+vertexai:gemini-2.5-flash
+```
+
+## 5) Gemini API path
+
+If you intentionally want the Gemini API key path, keep using the steps below.
+
+## 6) Enable the required Google Cloud services
 
 Replace `YOUR_PROJECT_ID` with your Google Cloud project id:
 
@@ -78,7 +116,7 @@ gcloud config set project YOUR_PROJECT_ID
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
 ```
 
-## 5) Quick deploy to Cloud Run
+## 7) Quick deploy to Cloud Run
 
 This uses the `Dockerfile` in this folder:
 
@@ -92,7 +130,7 @@ gcloud run deploy city-x-game \
 
 After deployment, open the Cloud Run service URL in your browser.
 
-## 6) Safer deploy with Secret Manager
+## 8) Safer deploy with Secret Manager
 
 Instead of passing the API key directly on the command line:
 

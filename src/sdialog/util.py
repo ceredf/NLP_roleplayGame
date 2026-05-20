@@ -445,6 +445,7 @@ def get_llm_model(model_name: str,
             "location",
             os.getenv("VERTEX_AI_LOCATION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "europe-west1",
         )
+        vertex_kwargs.setdefault("max_retries", 0)
 
         llm = ChatVertexAI(model=model_name, **vertex_kwargs)
     elif is_anthropic_model_name(model_name):

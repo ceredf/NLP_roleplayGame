@@ -224,7 +224,7 @@ def _handle_llm_error(exc: Exception) -> None:
             "The Gemini backend hit a quota limit, so the game is temporarily using scripted stakeholder "
             "fallbacks. Wait a bit, switch backend, or redeploy with a billed backend if you want full AI turns."
         )
-    elif any(token in lowered for token in ("invalid_argument", "api key", "permission denied", "unauthenticated")):
+    elif any(token in lowered for token in ("service_disabled", "agent platform api", "invalid_argument", "api key", "permission denied", "unauthenticated")):
         st.session_state.notice = (
             "The selected AI backend rejected a request. The game will keep going with scripted stakeholder "
             "fallbacks until the backend configuration is fixed."
