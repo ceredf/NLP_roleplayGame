@@ -100,6 +100,7 @@ FINAL_VOTE_DISPLAY = {
     "abstention": "Abstention",
     "rejection": "Rejection",
 }
+PROCESS_PLACEHOLDER = "To be filled out in the process"
 
 
 st.set_page_config(page_title="City X — Negotiation Game", layout="wide", page_icon="🏙️")
@@ -932,7 +933,7 @@ def render_proposal_card(compact: bool = False) -> None:
     statuses = st.session_state.round2_dimension_status
     for dim in game().scenario.proposal_dimensions:
         dim_id = dim["id"]
-        value = st.session_state.proposal_form.get(dim_id, "").strip() or "[blank]"
+        value = st.session_state.proposal_form.get(dim_id, "").strip() or PROCESS_PLACEHOLDER
         status = statuses.get(dim_id, "neutral")
         cls = {
             "green": "proposal-green",
@@ -993,13 +994,12 @@ def render_setup() -> None:
             "`google:gemini-2.5-flash` for Gemini API, or "
             "`ollama:qwen2.5:latest` for a local Ollama server."
         )
-        think = st.checkbox("Enable extended thinking", value=False)
         submit = st.form_submit_button(
             "Start the negotiation", type="primary", use_container_width=True
         )
     if submit:
         with st.spinner("Preparing the negotiation room and briefing the AI stakeholders…"):
-            init_game(model, role_id, think)
+            init_game(model, role_id, False)
         st.rerun()
 
 
@@ -1341,7 +1341,7 @@ def render_round2_results() -> None:
             continue
         status = result["status"]
         label, cls = status_label.get(status, status_label["neutral"])
-        text = st.session_state.proposal_form.get(dim, "").strip() or "[blank]"
+        text = st.session_state.proposal_form.get(dim, "").strip() or PROCESS_PLACEHOLDER
         # The dimension header color IS its aggregate vote outcome, so the
         # color always matches the votes shown directly below it.
         st.markdown(
@@ -1658,6 +1658,7 @@ def render_outcome() -> None:
         data=data,
         file_name="swm_dialog.json",
         mime="application/json",
+        type="primary",
     )
     if st.button("Play again", use_container_width=True):
         for key in list(st.session_state.keys()):

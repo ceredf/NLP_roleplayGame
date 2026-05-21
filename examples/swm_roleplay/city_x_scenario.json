@@ -366,7 +366,7 @@
         "batna": "Publish the evidence, frame the failure as environmental injustice, and escalate pressure publicly."
       },
       "key_relationships": [
-        "Community Member: trusted ally with lived legitimacy",
+        "Community Leader: trusted ally with lived legitimacy",
         "Informal Sector Worker: natural ally on exclusion and justice",
         "National Government: professionally wary because consultation is often symbolic",
         "Private Sector Company: skeptical until access and enforcement are guaranteed"
@@ -382,7 +382,7 @@
     },
     {
       "id": "community_member",
-      "display_name": "Community Member",
+      "display_name": "Community Leader",
       "iswm_category": "affected_population",
       "playable": true,
       "ai_default": true,
@@ -500,7 +500,7 @@
         "batna": "Return to the current system and fight exclusion from outside the agreement."
       },
       "key_relationships": [
-        "Community Member: solidarity because both of you live with the human cost of elite decisions",
+        "Community Leader: solidarity because both of you live with the human cost of elite decisions",
         "NGO / Civil Society: trust because they have supported worker safety and recognition before",
         "Private Sector Company: wary because their deal could remove your income entirely",
         "Municipal Government: distant because the city has never built a real mechanism to include workers"

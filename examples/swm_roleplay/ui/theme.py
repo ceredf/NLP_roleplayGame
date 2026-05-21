@@ -35,7 +35,7 @@ STAKEHOLDER_THEME: Dict[str, Dict[str, str]] = {
     "municipal_government": {"emoji": "🏙️", "color": "#2f6f5e", "bg": "#effaf6", "short": "Municipal"},
     "private_sector_company": {"emoji": "💼", "color": "#7a5a1f", "bg": "#f8f4e8", "short": "Private"},
     "ngo_civil_society": {"emoji": "🌿", "color": "#1f7a4c", "bg": "#edf9f1", "short": "NGO"},
-    "community_member": {"emoji": "🏘️", "color": "#3d6f59", "bg": "#f3fbf4", "short": "Community"},
+    "community_member": {"emoji": "🏘️", "color": "#3d6f59", "bg": "#f3fbf4", "short": "Community Leader"},
     "informal_sector_worker": {"emoji": "♻️", "color": "#157347", "bg": "#edf9f0", "short": "Workers"},
 }
 
