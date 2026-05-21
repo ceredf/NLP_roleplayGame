@@ -11,6 +11,7 @@ This interface runs a structured three-round negotiation:
 import json
 import os
 import re
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import streamlit as st
@@ -153,9 +154,8 @@ def ensure_state() -> None:
 
 
 def scenario():
-    from sdialog.roleplay import default_city_x_scenario_path, load_roleplay_scenario
-
-    return load_roleplay_scenario(default_city_x_scenario_path())
+    with open(Path(__file__).with_name("city_x_scenario.json"), "r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def rt():
@@ -965,22 +965,23 @@ def render_sidebar() -> None:
 def render_setup() -> None:
     st.markdown(components.setup_hero("assets/swm-logo.svg"), unsafe_allow_html=True)
     sc = scenario()
-    st.info(sc.summary)
+    stakeholder_map = {stakeholder["id"]: stakeholder for stakeholder in sc["stakeholders"]}
+    st.info(sc["summary"])
     cols = st.columns(3)
-    for index, stakeholder in enumerate(sc.stakeholders):
-        c = cfg(stakeholder.id)
+    for index, stakeholder in enumerate(sc["stakeholders"]):
+        c = cfg(stakeholder["id"])
         with cols[index % 3]:
             st.markdown(
                 f"<div class='proposal-box' style='background:{c['bg']};border-left:6px solid {c['color']};'>"
-                f"<b>{c['emoji']} {stakeholder.display_name}</b><br>"
-                f"<small>{stakeholder.public_profile.primary_goal}</small></div>",
+                f"<b>{c['emoji']} {stakeholder['display_name']}</b><br>"
+                f"<small>{stakeholder['public_profile']['primary_goal']}</small></div>",
                 unsafe_allow_html=True,
             )
     with st.form("setup_form"):
         role_id = st.selectbox(
             "Choose your stakeholder role",
-            options=[stakeholder.id for stakeholder in sc.stakeholders],
-            format_func=lambda rid: f"{cfg(rid)['emoji']} {sc.stakeholder_map()[rid].display_name}",
+            options=[stakeholder["id"] for stakeholder in sc["stakeholders"]],
+            format_func=lambda rid: f"{cfg(rid)['emoji']} {stakeholder_map[rid]['display_name']}",
         )
         model = st.text_input("AI model", value=default_model_value())
         st.caption(
