@@ -11,19 +11,15 @@ import os
 import re
 import json
 import uuid
-import torch
 import random
 import logging
 import subprocess
-import numpy as np
-import pandas as pd
 
 from time import sleep
 from tqdm.auto import tqdm
 from functools import wraps
 from pydantic import BaseModel
 from typing import Union, List, Tuple
-from sklearn.neighbors import NearestNeighbors
 
 from langchain.chat_models import init_chat_model
 from langchain_ollama.chat_models import ChatOllama
@@ -132,6 +128,8 @@ def softmax(values, temperature=0.05, as_list=True):
     :return: Softmax probability distribution.
     :rtype: Union[List[float], torch.Tensor]
     """
+    import torch
+
     probs = torch.nn.functional.softmax(torch.tensor(values, dtype=float) / temperature, dim=0)
     return probs.tolist() if as_list else probs
 
@@ -539,6 +537,8 @@ def set_generator_seed(generator, seed):
         base_model.seed = seed
         logger.log(logging.DEBUG, f"Setting the LLM seed to {seed}...")
     except Exception:
+        import torch
+
         torch.manual_seed(seed)
         seed = None
         logger.warning("The LLM does not support dynamically setting a seed.")
@@ -684,6 +684,8 @@ def dict_to_table(data: dict,
     """
     if not data:
         return "(empty table)"
+    import pandas as pd
+
     df = pd.DataFrame(data).T
     df.index.name = "dataset"
     if sort_by:
@@ -744,7 +746,7 @@ class SentencePairTransformer:  # As opposed to SentenceTransformer
                sent2: Union[str, List[str]],
                batch_size: int = 128,
                show_progress_bar: bool = True,
-               progress_bar_desc: str = "Computing embeddings") -> np.ndarray:
+               progress_bar_desc: str = "Computing embeddings") -> "Any":
         """
         Encode aligned sentence pairs into CLS embeddings.
 
@@ -761,6 +763,7 @@ class SentencePairTransformer:  # As opposed to SentenceTransformer
         :return: Array of shape (N, hidden_size) containing CLS embeddings.
         :rtype: np.ndarray
         """
+        import torch
         from sentence_transformers.util import batch_to_device
         from torch.utils.data import DataLoader, TensorDataset
 
@@ -792,6 +795,8 @@ class KNNModel:
     """
     def __init__(self, items, k=3):
         """Initialize KNN index."""
+        from sklearn.neighbors import NearestNeighbors
+
         # items = (item, vector) pair list
         self.model = NearestNeighbors(algorithm='auto',
                                       metric="cosine",

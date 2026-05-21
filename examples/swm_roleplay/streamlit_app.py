@@ -120,6 +120,14 @@ def default_model_value() -> str:
     return "ollama:qwen2.5:latest"
 
 
+def local_city_x_scenario_path() -> str:
+    return str(Path(__file__).with_name("city_x_scenario.json"))
+
+
+def local_city_x_rules_path() -> str:
+    return str(Path(__file__).with_name("city_x_game_rules.json"))
+
+
 def ensure_state() -> None:
     defaults = {
         "runtime": None,
@@ -154,7 +162,7 @@ def ensure_state() -> None:
 
 
 def scenario():
-    with open(Path(__file__).with_name("city_x_scenario.json"), "r", encoding="utf-8") as handle:
+    with open(local_city_x_scenario_path(), "r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -855,16 +863,12 @@ def _map_to_engine_vote(label: str) -> str:
 
 
 def init_game(model: str, role_id: str, think: bool) -> None:
-    from sdialog.roleplay import (
-        default_city_x_game_rules_path,
-        default_city_x_scenario_path,
-        load_and_prepare_roleplay_session,
-    )
+    from sdialog.roleplay import load_and_prepare_roleplay_session
     from sdialog.roleplay_engine import create_roleplay_runtime
 
     session = load_and_prepare_roleplay_session(
-        default_city_x_scenario_path(),
-        rules_path=default_city_x_game_rules_path(),
+        local_city_x_scenario_path(),
+        rules_path=local_city_x_rules_path(),
         human_roles=[role_id],
         model=model or None,
         think=think,
