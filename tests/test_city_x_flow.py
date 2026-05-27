@@ -194,6 +194,18 @@ def test_init_game_uses_local_city_x_paths(monkeypatch):
     assert app.st.session_state.proposal_form["timeline"]
 
 
+def test_setup_defaults_prefers_vertex_flash_lite(monkeypatch):
+    app = _load_app_module()
+    app.st = FakeStreamlit()
+    app.ensure_state()
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "nlp-2026-496908")
+
+    app._setup_defaults()
+
+    assert app.st.session_state.setup_role_id == "national_government"
+    assert app.st.session_state.setup_model == "vertexai:gemini-2.5-flash-lite"
+
+
 def test_round_flow_reaches_outcome_with_stubbed_ai(monkeypatch):
     app = _load_app_module()
     app.st = FakeStreamlit()
@@ -275,3 +287,62 @@ def test_round_flow_reaches_outcome_with_stubbed_ai(monkeypatch):
     assert app.game().outcome.outcome == "win"
     assert len(app.st.session_state.final_vote_labels) == len(app.ROUND1_ORDER)
     assert len(app.st.session_state.goal_evaluations) == len(app.ROUND1_ORDER)
+
+
+def test_goal_evaluation_handles_nested_json_fields(monkeypatch):
+    app = _load_app_module()
+    app.st = FakeStreamlit()
+    app.ensure_state()
+    app.st.session_state.runtime = _make_fake_runtime(app)
+    app.st.session_state.proposal_form = {
+        "core_action": "Formal transition starts in 18 months.",
+        "timeline": "First visible action starts within 30 days.",
+        "financing": "Public transition fund with named contributors.",
+        "community_health_protections": "Independent testing and mobile clinics.",
+        "livelihoods": "Income support and retraining for affected workers.",
+        "monitoring_and_enforcement": "Independent oversight with monthly public reporting.",
+    }
+
+    monkeypatch.setattr(
+        app,
+        "_call_agent",
+        lambda *_args, **_kwargs: (
+            '{"rating": {"label": "partially_achieved"}, '
+            '"explanation": {"text": "Nested value from model"}}'
+        ),
+    )
+
+    evaluations = app._evaluate_goal_achievement()
+
+    assert set(evaluations.keys()) == set(app.ROUND1_ORDER)
+    assert all(item["rating"] == "partially_achieved" for item in evaluations.values())
+    assert all(isinstance(item["explanation"], str) and item["explanation"] for item in evaluations.values())
+
+
+def test_back_from_role_reveal_resets_to_setup_and_preserves_choice():
+    app = _load_app_module()
+    app.st = FakeStreamlit()
+    app.ensure_state()
+    app.st.session_state.runtime = _make_fake_runtime(app)
+    app.st.session_state.stage = "role_reveal"
+    app.st.session_state.setup_model = "vertexai:gemini-2.5-flash-lite"
+
+    app._go_back()
+
+    assert app.st.session_state.runtime is None
+    assert app.st.session_state.stage == "setup"
+    assert app.st.session_state.setup_role_id == "community_member"
+    assert app.st.session_state.setup_model == "vertexai:gemini-2.5-flash-lite"
+
+
+def test_back_from_round2_flagging_returns_to_last_dimension():
+    app = _load_app_module()
+    app.st = FakeStreamlit()
+    app.ensure_state()
+    app.st.session_state.stage = "round2_flagging"
+    app.st.session_state.round2_dimension_index = len(app.NEGOTIABLE_DIMENSIONS)
+
+    app._go_back()
+
+    assert app.st.session_state.stage == "round2_table"
+    assert app.st.session_state.round2_dimension_index == len(app.NEGOTIABLE_DIMENSIONS) - 1

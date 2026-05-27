@@ -126,7 +126,7 @@ def spine(stage: str, round2_active_dim: Optional[str], dim_statuses: Dict[str, 
             cls = {"green": "s-green", "yellow": "s-yellow", "red": "s-red"}.get(st_, "")
             if dim == round2_active_dim:
                 cls = "s-active"
-            mods += f'<div class="wm-module {cls}">{_MODULE_LABEL[dim]}</div>'
+            mods += f'<div class="wm-module dim-{dim} {cls}">{_MODULE_LABEL[dim]}</div>'
         html += f'<div class="wm-subtrack">{mods}</div>'
     return html
 
@@ -139,12 +139,14 @@ def avatar_card(role_id: str, name: str, title: str, state: str = "idle",
                 satisfaction: Optional[float] = None, speaking: bool = False) -> str:
     meter = ""
     if satisfaction is not None:
-        pct = int(max(0.0, min(1.0, satisfaction)) * 100)
-        low = " low" if pct < 45 else ""
-        # cx-meter-shimmer adds a light sweep over the filling bar (effects pack)
+        value = max(0.0, min(1.0, satisfaction))
+        pct = int(value * 100)
+        hue = int(value * 120)
+        fill = f"hsl({hue} 63% 42%)"
+        fill_hi = f"hsl({hue} 72% 56%)"
         meter = (
-            f'<div class="wm-meter{low} cx-meter-shimmer">'
-            f'<span style="width:{pct}%"></span></div>'
+            f'<div class="wm-meter cx-meter-shimmer" title="Satisfaction: {pct}%">'
+            f'<span style="width:{pct}%;--wm-meter-fill:{fill};--wm-meter-fill-hi:{fill_hi};"></span></div>'
         )
     spk = " speaking" if speaking else ""
     # The active/speaking stakeholder gets the glow-pulse effect.

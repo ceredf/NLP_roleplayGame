@@ -84,6 +84,14 @@ SECTION_LABELS = {
     "livelihoods": "Livelihood protections",
     "monitoring_and_enforcement": "Monitoring and accountability",
 }
+DIMENSION_CARD_CLASS = {
+    "core_action": "proposal-fixed-core",
+    "timeline": "proposal-fixed-timeline",
+    "financing": "proposal-financing",
+    "community_health_protections": "proposal-health",
+    "livelihoods": "proposal-livelihoods",
+    "monitoring_and_enforcement": "proposal-monitoring",
+}
 MOVE_LABELS = {
     "propose": "Propose",
     "amend": "Amend",
@@ -101,6 +109,29 @@ FINAL_VOTE_DISPLAY = {
     "rejection": "Rejection",
 }
 PROCESS_PLACEHOLDER = "To be filled out in the process"
+STAGE_BACK_TARGET = {
+    "role_reveal": "setup",
+    "round1": "role_reveal",
+    "round2_bids": "round1",
+    "round2_table": "round2_bids",
+    "round2_flagging": "round2_table",
+    "round2_results": "round2_flagging",
+    "round3": "round2_results",
+    "final_vote": "round3",
+    "outcome": "final_vote",
+}
+STAGE_LABEL = {
+    "setup": "Setup",
+    "role_reveal": "Role card",
+    "round1": "Round 1",
+    "round2_bids": "Round 2 bids",
+    "round2_table": "Round 2 table",
+    "round2_flagging": "Round 2 flagging",
+    "round2_results": "Round 2 results",
+    "round3": "Round 3",
+    "final_vote": "Final vote",
+    "outcome": "Outcome",
+}
 
 
 st.set_page_config(page_title="City X — Negotiation Game", layout="wide", page_icon="🏙️")
@@ -108,14 +139,14 @@ st.markdown(theme.css(), unsafe_allow_html=True)
 
 
 def default_model_value() -> str:
-    """Prefer a hosted Google model automatically when a Gemini key is present."""
+    """Default to the lower-cost hosted Vertex AI model for repeatable gameplay."""
     if (
         os.getenv("GOOGLE_CLOUD_PROJECT")
         or os.getenv("GCLOUD_PROJECT")
         or os.getenv("GCP_PROJECT")
         or os.getenv("K_SERVICE")
     ):
-        return "vertexai:gemini-2.5-flash"
+        return "vertexai:gemini-2.5-flash-lite"
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "google:gemini-2.5-flash"
     return "ollama:qwen2.5:latest"
@@ -134,6 +165,13 @@ def ensure_state() -> None:
         "runtime": None,
         "stage": "setup",
         "notice": "",
+        "setup_role_id": "",
+        "setup_model": "",
+        "active_model": "",
+        "ai_call_count": 0,
+        "ai_success_call_count": 0,
+        "ai_empty_call_count": 0,
+        "ai_backend_errors": [],
         "proposal_form": {},
         "round1_spoken": set(),
         "round1_summary": "",
@@ -160,6 +198,82 @@ def ensure_state() -> None:
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
+
+
+def _setup_defaults() -> None:
+    sc = scenario()
+    if not st.session_state.setup_role_id:
+        st.session_state.setup_role_id = sc["stakeholders"][0]["id"]
+    if not st.session_state.setup_model:
+        st.session_state.setup_model = default_model_value()
+
+
+def _dimension_card_class(dimension_id: str) -> str:
+    return DIMENSION_CARD_CLASS.get(dimension_id, "")
+
+
+def _backend_status() -> Tuple[str, str]:
+    model = st.session_state.get("active_model") or st.session_state.get("setup_model") or default_model_value()
+    errors = st.session_state.get("ai_backend_errors") or []
+    success = int(st.session_state.get("ai_success_call_count") or 0)
+    calls = int(st.session_state.get("ai_call_count") or 0)
+
+    if model.startswith("vertexai:"):
+        if errors:
+            return (
+                "warning",
+                f"Cloud AI configured as Vertex AI, but backend errors occurred. The game may be using fallback responses. Successful AI calls: {success}/{calls}.",
+            )
+        if success:
+            return ("success", f"Cloud AI active via Vertex AI. Successful AI calls: {success}/{calls}.")
+        return ("info", "Cloud AI configured as Vertex AI. No live model call has completed yet in this session.")
+    if model.startswith("google:"):
+        if errors:
+            return (
+                "warning",
+                f"Gemini API configured, but backend errors occurred. Successful AI calls: {success}/{calls}.",
+            )
+        if success:
+            return ("success", f"Gemini API active. Successful AI calls: {success}/{calls}.")
+        return ("info", "Gemini API configured. No live model call has completed yet in this session.")
+    if model.startswith("ollama:"):
+        return ("info", f"Local AI backend active: {model}.")
+    return ("info", f"Configured AI model: {model}.")
+
+
+def _go_back() -> None:
+    stage = st.session_state.stage
+    target = STAGE_BACK_TARGET.get(stage)
+    if not target:
+        return
+
+    if stage == "role_reveal":
+        st.session_state.setup_role_id = human_role()
+        st.session_state.runtime = None
+        st.session_state.stage = "setup"
+    elif stage == "round2_flagging":
+        st.session_state.round2_dimension_index = max(len(NEGOTIABLE_DIMENSIONS) - 1, 0)
+        st.session_state.stage = target
+    elif stage == "final_vote":
+        if st.session_state.round3_dimensions:
+            st.session_state.round3_index = max(len(st.session_state.round3_dimensions) - 1, 0)
+            st.session_state.stage = "round3"
+        else:
+            st.session_state.stage = "round2_results"
+    else:
+        st.session_state.stage = target
+    st.rerun()
+
+
+def render_back_button() -> None:
+    stage = st.session_state.stage
+    target = STAGE_BACK_TARGET.get(stage)
+    if not target:
+        return
+    cols = st.columns([1, 6])
+    with cols[0]:
+        if st.button(f"← Back to {STAGE_LABEL[target]}", key=f"back_{stage}", use_container_width=True):
+            _go_back()
 
 
 def scenario():
@@ -212,6 +326,7 @@ _THINK_RE = re.compile(r"<think(?:ing)?>.*?</think(?:ing)?>", re.DOTALL | re.IGN
 def _handle_llm_error(exc: Exception) -> None:
     """Convert backend failures into a user-facing notice instead of a crash."""
     msg = str(exc)
+    st.session_state.ai_backend_errors.append(msg)
     lowered = msg.lower()
     if any(token in lowered for token in ("resource_exhausted", "quota exceeded", "rate limit", "429")):
         st.session_state.notice = (
@@ -229,6 +344,7 @@ def _call_agent(role_id: str, prompt: str) -> str:
     from langchain_core.messages import HumanMessage
 
     agent = rt().agents[role_id]
+    st.session_state.ai_call_count += 1
     # STATELESS call: pass the prompt as a one-message list. sdialog keeps the
     # agent's persona/system prompt (memory[0]) but does NOT accumulate the
     # growing dialog into context. Previously we passed the full game dialog,
@@ -249,6 +365,10 @@ def _call_agent(role_id: str, prompt: str) -> str:
     text = _THINK_RE.sub("", raw).strip()
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = text.replace("(bye bye!)", "").strip()
+    if text:
+        st.session_state.ai_success_call_count += 1
+    else:
+        st.session_state.ai_empty_call_count += 1
     return text
 
 
@@ -726,7 +846,8 @@ def _safe_parse_json(raw: str) -> dict:
     if start == -1 or end == -1:
         return {}
     try:
-        return json.loads(text[start : end + 1])
+        parsed = json.loads(text[start : end + 1])
+        return parsed if isinstance(parsed, dict) else {}
     except json.JSONDecodeError:
         return {}
 
@@ -741,10 +862,11 @@ def _generate_ai_flags(dimensions: List[str]) -> Dict[str, Dict[str, str]]:
         role_flags: Dict[str, Dict[str, str]] = {}
         for dim in dimensions:
             item = parsed.get(dim, {}) if isinstance(parsed, dict) else {}
-            flag = item.get("flag", "accept_with_condition")
-            if flag not in FLAG_LABELS:
+            flag = item.get("flag", "accept_with_condition") if isinstance(item, dict) else "accept_with_condition"
+            if not isinstance(flag, str) or flag not in FLAG_LABELS:
                 flag = "accept_with_condition"
-            reason = (item.get("reason") or "").strip()
+            reason_raw = item.get("reason") if isinstance(item, dict) else ""
+            reason = reason_raw.strip() if isinstance(reason_raw, str) else ""
             if not reason or reason.lower().rstrip(".") in ("needs more clarity", "more clarity"):
                 # Specific, in-character fallback instead of a generic phrase.
                 reason = _stakeholder_fallback(role_id, dim)
@@ -811,10 +933,11 @@ def _generate_ai_final_votes() -> Dict[str, Dict[str, str]]:
             parsed = _safe_parse_json(_call_agent(role_id, _final_vote_prompt(role_id)))
         except Exception:
             parsed = {}
-        vote = parsed.get("vote", "conditional_endorsement")
-        if vote not in FINAL_VOTE_LABELS:
+        vote = parsed.get("vote", "conditional_endorsement") if isinstance(parsed, dict) else "conditional_endorsement"
+        if not isinstance(vote, str) or vote not in FINAL_VOTE_LABELS:
             vote = "conditional_endorsement"
-        reason = (parsed.get("reason") or "").strip()
+        reason_raw = parsed.get("reason") if isinstance(parsed, dict) else ""
+        reason = reason_raw.strip() if isinstance(reason_raw, str) else ""
         generic = reason.lower().rstrip(".") in (
             "", "no reason provided", "needs more clarity", "more clarity",
         )
@@ -851,10 +974,16 @@ def _evaluate_goal_achievement() -> Dict[str, Dict[str, str]]:
             parsed = _safe_parse_json(_call_agent(moderator_role, prompt))
         except Exception:
             parsed = {}
-        rating = parsed.get("rating", "partially_achieved")
-        if rating not in {"fully_achieved", "partially_achieved", "not_achieved"}:
+        rating = parsed.get("rating", "partially_achieved") if isinstance(parsed, dict) else "partially_achieved"
+        if not isinstance(rating, str) or rating not in {"fully_achieved", "partially_achieved", "not_achieved"}:
             rating = "partially_achieved"
-        explanation = parsed.get("explanation", "The final proposal only partially matches the hidden thresholds.")
+        explanation = (
+            parsed.get("explanation", "The final proposal only partially matches the hidden thresholds.")
+            if isinstance(parsed, dict)
+            else "The final proposal only partially matches the hidden thresholds."
+        )
+        if not isinstance(explanation, str) or not explanation.strip():
+            explanation = "The final proposal only partially matches the hidden thresholds."
         role_evaluations[role_id] = {"rating": rating, "explanation": explanation}
     return role_evaluations
 
@@ -867,16 +996,22 @@ def init_game(model: str, role_id: str, think: bool) -> None:
     from sdialog.roleplay import load_and_prepare_roleplay_session
     from sdialog.roleplay_engine import create_roleplay_runtime
 
+    selected_model = model or default_model_value()
     session = load_and_prepare_roleplay_session(
         local_city_x_scenario_path(),
         rules_path=local_city_x_rules_path(),
         human_roles=[role_id],
-        model=model or None,
+        model=selected_model or None,
         think=think,
     )
     runtime = create_roleplay_runtime(session)
     st.session_state.runtime = runtime
     st.session_state.stage = "role_reveal"
+    st.session_state.active_model = selected_model
+    st.session_state.ai_call_count = 0
+    st.session_state.ai_success_call_count = 0
+    st.session_state.ai_empty_call_count = 0
+    st.session_state.ai_backend_errors = []
     st.session_state.notice = _moderator_text("opening")
     st.session_state.proposal_form = dict(PREFILLED_DIMENSIONS)
     st.session_state.round1_spoken = set()
@@ -941,8 +1076,9 @@ def render_proposal_card(compact: bool = False) -> None:
             "red": "proposal-red",
             "neutral": "proposal-neutral",
         }.get(status, "proposal-neutral")
+        dim_cls = _dimension_card_class(dim_id)
         st.markdown(
-            f'<div class="proposal-box {cls}"><b>{dim["label"]}</b><br>{value}</div>',
+            f'<div class="proposal-box {cls} {dim_cls}"><b>{dim["label"]}</b><br>{value}</div>',
             unsafe_allow_html=True,
         )
         if not compact and dim_id in st.session_state.round2_flags:
@@ -950,6 +1086,16 @@ def render_proposal_card(compact: bool = False) -> None:
 
 
 def render_sidebar() -> None:
+    level, message = _backend_status()
+    st.sidebar.markdown("### AI Backend")
+    st.sidebar.caption(st.session_state.get("active_model") or st.session_state.get("setup_model") or default_model_value())
+    if level == "success":
+        st.sidebar.success(message)
+    elif level == "warning":
+        st.sidebar.warning(message)
+    else:
+        st.sidebar.info(message)
+
     s = stakeholder_map()[human_role()]
     c = cfg(human_role())
     st.sidebar.markdown(f"### {c['emoji']} {s.display_name}")
@@ -970,6 +1116,7 @@ def render_sidebar() -> None:
 def render_setup() -> None:
     st.markdown(components.setup_hero("assets/swm-logo.svg"), unsafe_allow_html=True)
     sc = scenario()
+    _setup_defaults()
     stakeholder_map = {stakeholder["id"]: stakeholder for stakeholder in sc["stakeholders"]}
     st.info(sc["summary"])
     cols = st.columns(3)
@@ -987,8 +1134,9 @@ def render_setup() -> None:
             "Choose your stakeholder role",
             options=[stakeholder["id"] for stakeholder in sc["stakeholders"]],
             format_func=lambda rid: f"{cfg(rid)['emoji']} {stakeholder_map[rid]['display_name']}",
+            key="setup_role_id",
         )
-        model = st.text_input("AI model", value=default_model_value())
+        model = st.text_input("AI model", key="setup_model")
         st.caption(
             "Examples: `vertexai:gemini-2.5-flash` for billed Google Cloud Vertex AI, "
             "`google:gemini-2.5-flash` for Gemini API, or "
@@ -1095,10 +1243,12 @@ def render_round1() -> None:
         answer_one = st.text_area(
             "What is your opening position on the crisis in City X?",
             height=100,
+            max_chars=None,
         )
         answer_two = st.text_area(
             "Who do you believe is responsible and what outcome do you want?",
             height=100,
+            max_chars=None,
         )
         submitted = st.form_submit_button("Submit opening position", type="primary")
     if submitted and answer_one.strip() and answer_two.strip():
@@ -1125,7 +1275,7 @@ def render_round2_bids() -> None:
                 NEGOTIABLE_DIMENSIONS,
                 format_func=lambda dim: SECTION_LABELS[dim],
             )
-            reason = st.text_area("Short reason (optional)", height=90)
+            reason = st.text_area("Short reason (optional)", height=90, max_chars=None)
             submitted = st.form_submit_button("Collect all bids", type="primary", use_container_width=True)
         if submitted:
             reason_txt = reason.strip()
@@ -1268,7 +1418,7 @@ def render_round2_table() -> None:
         options = _dimension_options(human_role(), dimension_id)
         with st.form(f"dim_propose_{dimension_id}", clear_on_submit=True):
             preset = st.radio("Pick a ready-made option…", options["propose"])
-            free_text = st.text_area("…or write your own instead", height=90)
+            free_text = st.text_area("…or write your own instead", height=90, max_chars=None)
             submitted = st.form_submit_button(
                 f"Submit proposal on {label}", type="primary", use_container_width=True
             )
@@ -1279,7 +1429,7 @@ def render_round2_table() -> None:
 
     st.info(f"✍️ Reply to **{pname}** to keep negotiating, or move on when you're satisfied.")
     with st.form(f"dim_reply_{dimension_id}", clear_on_submit=True):
-        reply_text = st.text_area(f"Your reply to {pname}", height=90)
+        reply_text = st.text_area(f"Your reply to {pname}", height=90, max_chars=None)
         sent = st.form_submit_button(
             f"Send reply to {pname}", type="primary", use_container_width=True
         )
@@ -1342,10 +1492,11 @@ def render_round2_results() -> None:
         status = result["status"]
         label, cls = status_label.get(status, status_label["neutral"])
         text = st.session_state.proposal_form.get(dim, "").strip() or PROCESS_PLACEHOLDER
+        dim_cls = _dimension_card_class(dim)
         # The dimension header color IS its aggregate vote outcome, so the
         # color always matches the votes shown directly below it.
         st.markdown(
-            f'<div class="proposal-box {cls}">'
+            f'<div class="proposal-box {cls} {dim_cls}">'
             f'<b>{SECTION_LABELS[dim]}</b> &nbsp;'
             f'<span class="badge">{label}</span><br>'
             f'<small>{text}</small></div>',
@@ -1413,8 +1564,6 @@ def _objection_amendments(dimension_id: str) -> List[str]:
     opts = []
     for _role, name, reason in _round3_objections(dimension_id):
         short = reason.rstrip(".")
-        if len(short) > 110:
-            short = short[:107] + "…"
         opts.append(f"Address {name}'s objection — {short}")
     if not opts:
         opts = _dimension_options(human_role(), dimension_id)["amend"]
@@ -1512,7 +1661,7 @@ def render_round3() -> None:
                 "Pick an amendment (each one targets a real objection)…",
                 _objection_amendments(dimension_id),
             )
-            free_text = st.text_area("…or write your own amendment", height=90)
+            free_text = st.text_area("…or write your own amendment", height=90, max_chars=None)
             submitted = st.form_submit_button(
                 f"Submit amendment on {label}", type="primary", use_container_width=True
             )
@@ -1523,7 +1672,7 @@ def render_round3() -> None:
 
     st.info(f"✍️ Reply to **{pname}**, or move on when the objections are addressed.")
     with st.form(f"r3_reply_{dimension_id}", clear_on_submit=True):
-        reply_text = st.text_area(f"Your reply to {pname}", height=90)
+        reply_text = st.text_area(f"Your reply to {pname}", height=90, max_chars=None)
         sent = st.form_submit_button(
             f"Send reply to {pname}", type="primary", use_container_width=True
         )
@@ -1775,6 +1924,7 @@ def main() -> None:
     )
     render_sidebar()
     render_game_header(st.session_state.stage)
+    render_back_button()
 
     stage = st.session_state.stage
     if stage == "role_reveal":

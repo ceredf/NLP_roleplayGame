@@ -1,0 +1,23 @@
+{
+  "output": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-stakeholder-one-slide/6-stakeholders-one-slide.pptx",
+  "outputBytes": 14542,
+  "slideCount": 1,
+  "slideSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "previewDir": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-stakeholder-one-slide/preview",
+  "previewPaths": [
+    "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-stakeholder-one-slide/preview/slide-01.png"
+  ],
+  "layoutResults": [],
+  "contactSheet": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-stakeholder-one-slide/contact-sheet.png",
+  "slides": [
+    {
+      "index": 1,
+      "requestedSlideNumber": 1,
+      "modulePath": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-stakeholder-one-slide/slides/slide-01.mjs",
+      "exportName": "slide01"
+    }
+  ]
+}

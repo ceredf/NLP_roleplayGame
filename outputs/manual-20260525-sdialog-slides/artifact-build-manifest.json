@@ -1,0 +1,30 @@
+{
+  "output": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/sdialog-next-steps-and-architecture.pptx",
+  "outputBytes": 19546,
+  "slideCount": 2,
+  "slideSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "previewDir": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/preview",
+  "previewPaths": [
+    "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/preview/slide-01.png",
+    "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/preview/slide-02.png"
+  ],
+  "layoutResults": [],
+  "contactSheet": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/contact-sheet.png",
+  "slides": [
+    {
+      "index": 1,
+      "requestedSlideNumber": 1,
+      "modulePath": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/slides/slide-01.mjs",
+      "exportName": "slide01"
+    },
+    {
+      "index": 2,
+      "requestedSlideNumber": 2,
+      "modulePath": "/Users/francescacereda/Documents/Codex/deploy/outputs/manual-20260525-sdialog-slides/slides/slide-02.mjs",
+      "exportName": "slide02"
+    }
+  ]
+}

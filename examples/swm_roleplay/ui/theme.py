@@ -366,6 +366,18 @@ code, kbd, pre, .t-mono {{ font-family: var(--wm-font-mono); }}
     border-color: var(--wm-olive-deep) !important;
     box-shadow: 0 12px 26px rgba(63,107,60,0.24);
 }}
+[data-testid="stDownloadButton"] button {{
+    border-radius: 999px !important;
+    border: 1px solid var(--wm-olive-deep) !important;
+    background: linear-gradient(135deg, var(--wm-olive-deep) 0%, var(--wm-olive) 100%) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 12px 26px rgba(63,107,60,0.24);
+}}
+[data-testid="stDownloadButton"] button * {{
+    color: #fff !important;
+    fill: #fff !important;
+}}
 
 /* --- SWM chrome bar (top of page, optional — render via components.chrome_bar()) --- */
 .cx-chrome {{
@@ -462,6 +474,30 @@ code, kbd, pre, .t-mono {{ font-family: var(--wm-font-mono); }}
     border-left: 6px solid var(--wm-sage);
     background: linear-gradient(180deg,#f0eee7 0%,#f7f4ec 100%);
 }}
+.proposal-fixed-core {{
+    border-left-color: #6d5b92;
+    background:
+        linear-gradient(180deg, rgba(243, 237, 252, 0.98) 0%, rgba(250, 246, 255, 0.98) 100%);
+}}
+.proposal-fixed-timeline {{
+    border-left-color: #2d6a9f;
+    background:
+        linear-gradient(180deg, rgba(233, 244, 253, 0.98) 0%, rgba(244, 250, 255, 0.98) 100%);
+}}
+.proposal-financing {{
+    border-left-color: #916c1c;
+    background:
+        linear-gradient(180deg, rgba(251, 244, 220, 0.98) 0%, rgba(255, 250, 239, 0.98) 100%);
+}}
+.proposal-health {{
+    border-left-color: #2f6f5e;
+}}
+.proposal-livelihoods {{
+    border-left-color: #157347;
+}}
+.proposal-monitoring {{
+    border-left-color: #6f4d2b;
+}}
 
 /* --- Round header --- */
 .round-hdr {{
@@ -515,6 +551,14 @@ code, kbd, pre, .t-mono {{ font-family: var(--wm-font-mono); }}
     color:#fff; border-style:solid; animation: wmPulse 2s ease-in-out infinite;
     background:linear-gradient(135deg,#4a5042,#5e7d4f);
 }}
+.wm-module.dim-financing {{ border-color: rgba(145,108,28,0.36); color:#7a5a1f; }}
+.wm-module.dim-financing.s-active,
+.wm-module.dim-financing.s-green {{
+    background: linear-gradient(135deg, #7a5a1f, #b48a35);
+}}
+.wm-module.dim-community_health_protections {{ border-color: rgba(47,111,94,0.28); }}
+.wm-module.dim-livelihoods {{ border-color: rgba(21,115,71,0.28); }}
+.wm-module.dim-monitoring_and_enforcement {{ border-color: rgba(111,77,43,0.28); }}
 
 /* --- Avatar roster + satisfaction meters --- */
 .wm-roster {{ display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 14px; }}
@@ -530,10 +574,10 @@ code, kbd, pre, .t-mono {{ font-family: var(--wm-font-mono); }}
 .wm-meter {{ height:8px; border-radius:999px; background:rgba(142,107,63,0.16); margin-top:7px; overflow:hidden; }}
 .wm-meter > span {{
     display:block; height:100%; border-radius:999px;
-    background:linear-gradient(90deg,var(--wm-olive),var(--wm-olive-deep));
+    background:linear-gradient(90deg,var(--wm-meter-fill-hi),var(--wm-meter-fill));
+    box-shadow: 0 0 10px rgba(63,107,60,0.18);
     transition: width 1.1s cubic-bezier(.22,1,.36,1);
 }}
-.wm-meter.low > span {{ background:linear-gradient(90deg,#d8a25a,var(--wm-danger)); }}
 
 /* --- City banner --- */
 .wm-city {{
